@@ -24,11 +24,12 @@ UKF::UKF() {
   // initial covariance matrix
   P_ = MatrixXd(5, 5);
 
+  // TODO(Olala): tune only the process noise, not the measurement noise
   // Process noise standard deviation longitudinal acceleration in m/s^2
-  std_a_ = 30;
+  std_a_ = 0.7;
 
   // Process noise standard deviation yaw acceleration in rad/s^2
-  std_yawdd_ = 30;
+  std_yawdd_ = M_PI/4;
 
   // Laser measurement noise standard deviation position1 in m
   std_laspx_ = 0.15;
@@ -52,6 +53,15 @@ UKF::UKF() {
 
   Hint: one or more values initialized above might be wildly off...
   */
+  n_x_ = 5;
+  n_aug_ = 7;
+  lambda_ = 3 - n_aug_;
+
+  Xsig_pred_ = MatrixXd(n_x_, 2*n_aug_+1);
+  weights_ = VectorXd(2*n_aug_+1);
+
+  // TODO(Olala): ccalculate NIS_radar_ and NIS_laser_
+
 }
 
 UKF::~UKF() {}
@@ -67,6 +77,49 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
   Complete this function! Make sure you switch between lidar and radar
   measurements.
   */
+  if(!initialized){
+    if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR && use_radar_) {
+      /**
+      Convert radar from polar to cartesian coordinates and initialize state.
+      */
+      float ro = measurement_pack.raw_measurements_[0];
+      float phi = measurement_pack.raw_measurements_[1];
+      float px = ro * cos(phi);
+      float py = ro * sin(phi);
+      x_ << px, py, 0, 0, 0;
+    }
+    else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER && use_laser_) {
+      float px = measurement_pack.raw_measurements_[0];
+      float py = measurement_pack.raw_measurements_[1];
+      x_ << px, py, 0, 0, 0;
+    }
+    else { // Ignored unused data
+      return;
+    }
+
+    previous_timestamp_ = measurement_pack.timestamp_;
+    is_initialized_ = true;
+    return;
+  }
+
+  // Predict using current belive
+  double dt = (measurement_pack.timestamp_ - previous_timestamp_) / 1000000.0;  //dt - expressed in seconds
+  double epsilon = 0.00001;
+  if (dt > epsilon){ //only predict when dt is large enough
+    previous_timestamp_ = measurement_pack.timestamp_;
+    Prediction(dt);
+  }
+
+  // TODO(Olala): update
+  if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR && use_radar_) {
+    UpdateRadar(measurement_pack);
+  }
+  else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER && use_laser_) {
+    UpdateLidar(measurement_pack);
+  } else {
+    std::cout << "Unexpected sensor_type_" << std::endl;
+    assert(false);
+  }
 }
 
 /**
