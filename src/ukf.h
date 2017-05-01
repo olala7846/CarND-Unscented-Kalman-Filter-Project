@@ -74,6 +74,8 @@ public:
   ///* the current NIS for laser
   double NIS_laser_;
 
+  double previous_timestamp_;
+
   /**
    * Constructor
    */
@@ -108,6 +110,15 @@ public:
    * @param meas_package The measurement at k+1
    */
   void UpdateRadar(MeasurementPackage meas_package);
+
+private:
+  /* Methods added by olala */
+  void GenerateSigmaPoints(MatrixXd& Xsig_out);
+  void SigmaPointPredictions(MatrixXd& Xsig_out, const double delta_t_aug);
+  void PredictMeanAndCovariance();
+  void PredictRadarMeasurement(VectorXd& z_pred, MatrixXd& S, MatrixXd& Zsig);
+  void DisplayCurrentState();
+
 };
 
 #endif /* UKF_H */
