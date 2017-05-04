@@ -118,6 +118,7 @@ private:
   void PredictMeanAndCovariance();
   void PredictRadarMeasurement(VectorXd& z_pred, MatrixXd& S, MatrixXd& Zsig);
   void DisplayCurrentState();
+  double NormalizeAngle(const double angle);
 
 };
 

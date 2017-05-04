@@ -163,7 +163,7 @@ int main(int argc, char* argv[]) {
     ukf.ProcessMeasurement(measurement_pack_list[k]);
 
     // timestamp
-    out_file_ << measurement_pack_list[k].timestamp_ << "\t"; // pos1 - est
+    // out_file_ << measurement_pack_list[k].timestamp_ << "\t"; // pos1 - est
 
     // output the state vector
     out_file_ << ukf.x_(0) << "\t"; // pos1 - est
