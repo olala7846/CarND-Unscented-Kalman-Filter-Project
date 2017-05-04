@@ -29,6 +29,9 @@ public:
   ///* state covariance matrix
   MatrixXd P_;
 
+  ///* lidar state to mearument
+  MatrixXd H_;
+
   ///* predicted sigma points matrix
   MatrixXd Xsig_pred_;
 

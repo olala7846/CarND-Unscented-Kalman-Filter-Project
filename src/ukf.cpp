@@ -16,7 +16,7 @@ const double EPSILON = 0.00001;
  */
 UKF::UKF() {
   // if this is false, laser measurements will be ignored (except during init)
-  use_laser_ = false;
+  use_laser_ = true;
 
   // if this is false, radar measurements will be ignored (except during init)
   use_radar_ = true;
@@ -47,7 +47,7 @@ UKF::UKF() {
   std_radphi_ = 0.03;
 
   // Radar measurement noise standard deviation radius change in m/s
-  std_radrd_ = 0.3;
+  std_radrd_ = 1.3;
 
   /**
   TODO:
@@ -69,7 +69,9 @@ UKF::UKF() {
     weights_(i) = 0.5/(n_aug_+lambda_);
   }
 
-  // TODO(Olala): calculate NIS_radar_ and NIS_laser_
+  H_ = MatrixXd::Zero(2, n_x_);
+  H_(0,0) = 1.0;
+  H_(1,1) = 1.0;
 }
 
 UKF::~UKF() {}
@@ -167,7 +169,23 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
 
   You'll also need to calculate the lidar NIS.
   */
-  std::cout << "UpdateLidar";
+  VectorXd z = meas_package.raw_measurements_;
+  VectorXd z_pred = H_ * x_;
+  VectorXd y = z - z_pred;
+
+  MatrixXd S = H_ * P_ * H_.transpose();
+  S(0,0) += std_laspx_ * std_laspx_;
+  S(1,1) += std_laspy_ * std_laspy_;
+  MatrixXd K = P_ * H_.transpose() * S.inverse();
+
+  x_ = x_ + K*y;
+
+  int x_size = x_.size();
+  MatrixXd I = MatrixXd::Identity(x_size, x_size);
+  P_ = (I - K * H_) * P_;
+
+  /* calculate the lidar NIS */
+  NIS_laser_ = (z -  z_pred).transpose()* S.inverse() * (z - z_pred);
 }
 
 /**
