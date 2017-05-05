@@ -9,7 +9,7 @@ using Eigen::MatrixXd;
 using Eigen::VectorXd;
 using std::vector;
 
-const double EPSILON = 0.00001;
+const double EPSILON = 0.0001;
 
 /**
  * Initializes Unscented Kalman filter
@@ -99,12 +99,23 @@ void UKF::ProcessMeasurement(MeasurementPackage measurement_pack) {
       float phi = measurement_pack.raw_measurements_[1];
       float px = ro * cos(phi);
       float py = ro * sin(phi);
+
+      // Avoid initializing with nonsense data
+      if ( fabs(px) <= EPSILON && fabs(py) <= EPSILON){
+        px = 0.001;
+        py = 0.001;
+      }
       x_(0) = px;
       x_(1) = py;
     }
     else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
       float px = measurement_pack.raw_measurements_[0];
       float py = measurement_pack.raw_measurements_[1];
+      // Avoid initializing with nonsense data
+      if ( fabs(px) <= EPSILON && fabs(py) <= EPSILON){
+        px = 0.001;
+        py = 0.001;
+      }
       x_(0) = px;
       x_(1) = py;
     }
@@ -123,6 +134,13 @@ void UKF::ProcessMeasurement(MeasurementPackage measurement_pack) {
   double dt = (measurement_pack.timestamp_ - previous_timestamp_) / 1000000.0;
   if (dt > EPSILON){    //only predict when dt is large enough
     previous_timestamp_ = measurement_pack.timestamp_;
+
+    // Avoid prediction numerical instability
+    while(dt > 0.2) {
+      double step = 0.01;
+      Prediction(step);
+      dt -= step;
+    }
     Prediction(dt);
   }
 
@@ -161,8 +179,12 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
   VectorXd y = z - z_pred;
 
   MatrixXd S = H_ * P_ * H_.transpose();
-  S(0,0) += std_laspx_ * std_laspx_;
-  S(1,1) += std_laspy_ * std_laspy_;
+
+  MatrixXd R = MatrixXd::Zero(2, 2);
+  R(0,0) = std_laspx_ * std_laspx_;
+  R(1,1) = std_laspy_ * std_laspy_;
+
+  S += R;
   MatrixXd K = P_ * H_.transpose() * S.inverse();
 
   x_ = x_ + K*y;
