@@ -29,7 +29,7 @@ UKF::UKF() {
 
   // TODO(Olala): tune only the process noise, not the measurement noise
   // Process noise standard deviation longitudinal acceleration in m/s^2
-  std_a_ = 3;
+  std_a_ = 2;
 
   // Process noise standard deviation yaw acceleration in rad/s^2
   std_yawdd_ = 1;
