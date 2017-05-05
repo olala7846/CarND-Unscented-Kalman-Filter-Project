@@ -29,7 +29,7 @@ public:
   ///* state covariance matrix
   MatrixXd P_;
 
-  ///* lidar state to mearument
+  ///* lidar obsercation model (belive state -> lidar estimation state)
   MatrixXd H_;
 
   ///* predicted sigma points matrix
