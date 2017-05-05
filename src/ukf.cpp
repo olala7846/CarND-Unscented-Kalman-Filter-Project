@@ -49,11 +49,6 @@ UKF::UKF() {
   // Radar measurement noise standard deviation radius change in m/s
   std_radrd_ = 1.3;
 
-  // Lidar observation
-  H_ = MatrixXd::Zero(2, n_x_);
-  H_(0,0) = 1.0;
-  H_(1,1) = 1.0;
-
   // Other initializataions
   is_initialized_ = false;
 
@@ -64,6 +59,11 @@ UKF::UKF() {
   lambda_ = 3 - n_aug_;
 
   Xsig_pred_ = MatrixXd(n_x_, 2*n_aug_+1);
+
+  // Lidar observation
+  H_ = MatrixXd::Zero(2, n_x_);
+  H_(0,0) = 1.0;
+  H_(1,1) = 1.0;
 
   // Only calculate weight once
   weights_ = VectorXd(2*n_aug_+1);
@@ -133,7 +133,6 @@ void UKF::ProcessMeasurement(MeasurementPackage measurement_pack) {
   else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
     UpdateLidar(measurement_pack);
   } else {
-    std::cout << "Unexpected sensor_type_" << std::endl;
     assert(false);
   }
 }
